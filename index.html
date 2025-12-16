@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>S.I.A. - Sistema de Ingeniería Asistido (Full Career)</title>
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --chat-bg: #111;
+            --user-msg-bg: #005f99;
+            --bot-msg-bg: #1e1e1e;
+            --text-color: #e0e0e0;
+            --accent-color: #00ff41; /* Verde Hacker */
+            --accent-dim: #008f11;
+            --font-main: 'Courier New', Courier, monospace;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- Header --- */
+        header {
+            background-color: #000;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 2px solid var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-dim);
+            z-index: 10;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: var(--accent-color);
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            text-shadow: 0 0 5px var(--accent-dim);
+        }
+
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background-color: var(--accent-color);
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+
+        /* --- Chat Area --- */
+        #chat-container {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: var(--chat-bg);
+            /* Efecto CRT sutil */
+            background-image: 
+                linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 2px, 3px 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .message {
+            max-width: 85%;
+            padding: 12px 18px;
+            border-radius: 6px;
+            position: relative;
+            line-height: 1.6;
+            animation: fadeIn 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+            font-size: 0.95rem;
+        }
+
+        .message.bot {
+            align-self: flex-start;
+            background-color: var(--bot-msg-bg);
+            border-left: 4px solid var(--accent-color);
+            color: #cfcfcf;
+        }
+        
+        .message.bot strong {
+            color: var(--accent-color);
+        }
+
+        .message.user {
+            align-self: flex-end;
+            background-color: var(--user-msg-bg);
+            border-right: 4px solid #00aaff;
+            color: white;
+            text-align: right;
+        }
+
+        .timestamp {
+            font-size: 0.7rem;
+            opacity: 0.5;
+            margin-top: 5px;
+            display: block;
+            font-style: italic;
+        }
+
+        /* --- Input Area --- */
+        #input-area {
+            background-color: #1a1a1a;
+            padding: 20px;
+            display: flex;
+            gap: 15px;
+            border-top: 1px solid #333;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 15px;
+            background-color: #2a2a2a;
+            border: 1px solid #444;
+            color: white;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            outline: none;
+            transition: all 0.3s;
+            border-radius: 4px;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(0, 255, 65, 0.2);
+        }
+
+        button {
+            padding: 0 30px;
+            background-color: var(--accent-dim);
+            color: black;
+            border: none;
+            font-weight: bold;
+            font-family: var(--font-main);
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        button:hover {
+            background-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-dim);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* --- Tables for Data --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.85rem;
+            color: #ddd;
+            background: #222;
+        }
+        
+        th, td {
+            border: 1px solid #444;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #333;
+            color: var(--accent-color);
+            text-transform: uppercase;
+        }
+
+        tr:nth-child(even) {
+            background-color: #2a2a2a;
+        }
+
+        /* --- Chips/Suggestions --- */
+        .chip-container {
+            display: flex;
+            gap: 10px;
+            padding: 0 20px 10px 20px;
+            overflow-x: auto;
+            background-color: var(--chat-bg);
+        }
+
+        .chip {
+            background: #333;
+            color: #aaa;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            border: 1px solid #444;
+            white-space: nowrap;
+        }
+
+        .chip:hover {
+            border-color: var(--accent-color);
+            color: white;
+        }
+
+        /* --- Animations --- */
+        @keyframes pulse {
+            0% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 65, 0.4); }
+            70% { opacity: 0.7; box-shadow: 0 0 0 10px rgba(0, 255, 65, 0); }
+            100% { opacity: 1; box-shadow: 0 0 0 0 rgba(0, 255, 65, 0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #1a1a1a; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1><span class="status-dot"></span>S.I.A. <small style="font-size: 0.5em; opacity: 0.8; color: white;">INGENIERÍA INTEGRAL v2.0</small></h1>
+    </header>
+
+    <div id="chat-container">
+        <!-- Messages will appear here -->
+    </div>
+    
+    <!-- Sugerencias rápidas -->
+    <div class="chip-container">
+        <div class="chip" onclick="setInput('¿Cuál es mi promedio?')">Promedio</div>
+        <div class="chip" onclick="setInput('Tips de Programación')">Programación</div>
+        <div class="chip" onclick="setInput('Ayuda con Redes')">Redes</div>
+        <div class="chip" onclick="setInput('Conceptos de BD')">Bases de Datos</div>
+        <div class="chip" onclick="setInput('Seguridad Informática')">Seguridad</div>
+        <div class="chip" onclick="setInput('Motivación')">Motivación</div>
+    </div>
+
+    <div id="input-area">
+        <input type="text" id="user-input" placeholder="Consulta sobre materias, horario o conceptos..." autocomplete="off">
+        <button onclick="handleSend()">ENVIAR</button>
+    </div>
+
+    <script>
+        // ==========================================
+        // 1. BASE DE DATOS (Expediente Académico)
+        // ==========================================
+        const studentData = {
+            grades: [
+                { materia: 'Cálculo Vectorial', semestre: 3, calificacion: 85 },
+                { materia: 'Programación Orientada a Objetos', semestre: 3, calificacion: 95 },
+                { materia: 'Ecuaciones Diferenciales', semestre: 3, calificacion: 70 },
+                { materia: 'Estructura de Datos', semestre: 3, calificacion: 92 },
+                { materia: 'Redes de Computadoras I', semestre: 4, calificacion: 88 },
+                { materia: 'Bases de Datos I', semestre: 4, calificacion: 90 },
+                { materia: 'Sistemas Operativos', semestre: 4, calificacion: 82 }
+            ],
+            schedule: [
+                { dia: 'Lunes', hora: '07:00 - 09:00', materia: 'Redes I (Lab A)' },
+                { dia: 'Lunes', hora: '09:00 - 11:00', materia: 'Bases de Datos' },
+                { dia: 'Martes', hora: '10:00 - 12:00', materia: 'Inteligencia Artificial' },
+                { dia: 'Miércoles', hora: '14:00 - 16:00', materia: 'Sistemas Operativos' },
+                { dia: 'Jueves', hora: '08:00 - 10:00', materia: 'Inglés Técnico' },
+                { dia: 'Viernes', hora: '10:00 - 12:00', materia: 'Ética Profesional' }
+            ]
+        };
+
+        // ==========================================
+        // 2. CEREBRO IA (Base de Conocimiento Expandida)
+        // ==========================================
+        const intents = [
+            // --- BÁSICOS ---
+            {
+                tag: "saludo",
+                patterns: ["hola", "que tal", "buenos dias", "iniciar", "start", "buenas", "hey"],
+                responses: ["Sistemas en línea. Hola ingeniero.", "Núcleo de S.I.A. activo. ¿En qué área trabajamos hoy?", "Bienvenido colega. Esperando instrucciones."]
+            },
+            {
+                tag: "despedida",
+                patterns: ["adios", "bye", "cerrar", "apagar", "hasta luego", "salir", "nos vemos"],
+                responses: ["Liberando memoria... Hasta luego.", "Guardando sesión. Éxito en tus compilaciones.", "Cerrando conexión segura."]
+            },
+            {
+                tag: "identidad",
+                patterns: ["quien eres", "tu nombre", "que eres", "presentate"],
+                responses: ["Soy S.I.A. (Sistema de Ingeniería Asistido), tu copiloto académico para la carrera de Sistemas."]
+            },
+
+            // --- ADMINISTRATIVO ---
+            {
+                tag: "promedio",
+                patterns: ["promedio", "calificaciones", "notas", "como voy", "score", "kardex", "mis materias"],
+                action: "CALCULATE_AVERAGE"
+            },
+            {
+                tag: "horario",
+                patterns: ["horario", "clase", "toca", "calendario", "agenda", "que materia sigue"],
+                action: "SHOW_SCHEDULE"
+            },
+
+            // --- ÁREA: PROGRAMACIÓN & DESARROLLO ---
+            {
+                tag: "programacion_general",
+                patterns: ["programacion", "codigo", "desarrollo", "software", "backend", "frontend", "fullstack"],
+                responses: [
+                    "Recuerda: 'El código se lee más veces de las que se escribe'. Mantén tu código limpio (Clean Code).",
+                    "¿Backend o Frontend? Para Back te recomiendo Python/Java/Node. Para Front, domina React/Vue.",
+                    "Antes de escribir código, escribe pseudocódigo o dibuja un diagrama de flujo."
+                ]
+            },
+            {
+                tag: "debug_ayuda",
+                patterns: ["error", "bug", "no compila", "falla", "exception", "null pointer"],
+                responses: [
+                    "90% de los errores son de capa 8 (usuario). Revisa sintaxis básica.",
+                    "Lee el Stack Trace de abajo hacia arriba. Ahí suele estar la respuesta.",
+                    "¿Has intentado explicarle tu código a un pato de hule? (Rubber Duck Debugging funciona)."
+                ]
+            },
+            {
+                tag: "ing_software",
+                patterns: ["agile", "scrum", "uml", "requerimientos", "cascada", "kanban", "ciclo de vida"],
+                responses: [
+                    "En Scrum, los Daily Standups son de 15 min. ¡No te extiendas!",
+                    "UML no es dibujo libre. Diagramas de Clase para estructura, Diagramas de Secuencia para comportamiento.",
+                    "La Ingeniería de Software es gestionar complejidad. Divide y vencerás."
+                ]
+            },
+
+            // --- ÁREA: MATEMÁTICAS & CIENCIAS BÁSICAS ---
+            {
+                tag: "matematicas",
+                patterns: ["calculo", "algebra", "integral", "derivada", "ecuacion", "matematicas", "fourier"],
+                responses: [
+                    "La derivada es la pendiente de la tangente. La integral es el área bajo la curva.",
+                    "Para Álgebra Lineal: Entender matrices y vectores es CRUCIAL para Gráficos por Computadora e IA.",
+                    "No temas a las Transformadas de Fourier, son la base del procesamiento de señales."
+                ]
+            },
+            
+            // --- ÁREA: INFRAESTRUCTURA & REDES ---
+            {
+                tag: "redes",
+                patterns: ["redes", "ip", "cisco", "router", "switch", "osi", "tcp", "udp", "subnetting", "ping"],
+                responses: [
+                    "Recuerda el modelo OSI (7 capas): Física, Enlace, Red, Transporte, Sesión, Presentación, Aplicación.",
+                    "TCP es orientado a conexión (fiable). UDP es sin conexión (rápido, para streaming/juegos).",
+                    "¿Subnetting? Recuerda que /24 te da 254 hosts útiles (256 - red - broadcast)."
+                ]
+            },
+            {
+                tag: "sistemas_operativos",
+                patterns: ["linux", "windows", "unix", "kernel", "proceso", "hilo", "memoria ram", "deadlock"],
+                responses: [
+                    "En Linux, todo es un archivo. Aprende comandos básicos: ls, cd, grep, chmod.",
+                    "Un 'Deadlock' ocurre cuando dos procesos esperan recursos que el otro tiene. Como un embotellamiento.",
+                    "La virtualización es clave hoy en día. ¿Ya probaste Docker o máquinas virtuales?"
+                ]
+            },
+
+            // --- ÁREA: DATOS & IA ---
+            {
+                tag: "bases_datos",
+                patterns: ["sql", "mysql", "mongo", "normalizacion", "er", "entidad", "relacion", "bd", "query"],
+                responses: [
+                    "<code>SELECT * FROM exito WHERE esfuerzo > 0;</code>",
+                    "Normaliza hasta la 3ra Forma Normal (3FN) para evitar redundancia de datos.",
+                    "SQL es para datos estructurados (Tablas). NoSQL (MongoDB) es flexible para datos no estructurados."
+                ]
+            },
+            {
+                tag: "inteligencia_artificial",
+                patterns: ["ia", "ai", "machine learning", "red neuronal", "python ia", "datos"],
+                responses: [
+                    "La IA no es magia, es estadística computacional. Aprende Python, Pandas y Scikit-Learn.",
+                    "En Machine Learning, tus datos son más importantes que tu algoritmo. 'Garbage in, Garbage out'.",
+                    "Empieza por Regresión Lineal antes de saltar a Deep Learning."
+                ]
+            },
+
+            // --- ÁREA: SEGURIDAD ---
+            {
+                tag: "seguridad",
+                patterns: ["hacking", "seguridad", "firewall", "virus", "encriptacion", "ciberseguridad", "kali", "phishing"],
+                responses: [
+                    "La seguridad informática se basa en la triada CIA: Confidencialidad, Integridad y Disponibilidad.",
+                    "Nunca confíes en el input del usuario. Siempre sanea (sanitize) las entradas para evitar SQL Injection.",
+                    "El eslabón más débil siempre es el humano. Cuidado con la Ingeniería Social."
+                ]
+            },
+
+            // --- APOYO EMOCIONAL ---
+            {
+                tag: "motivacion",
+                patterns: ["cansado", "rendirme", "dificil", "no entiendo", "reprobé", "triste", "estres"],
+                responses: [
+                    "Ingeniería no es carrera de velocidad, es de resistencia. ¡Tú puedes!",
+                    "¿Falló el código? Bien, ahora sabes una forma de cómo NO hacerlo. Sigue intentando.",
+                    "Tómate un descanso. A veces la solución llega cuando te alejas del monitor 10 minutos."
+                ]
+            }
+        ];
+
+        class AIBrain {
+            constructor() {
+                this.confidenceThreshold = 0.3;
+            }
+
+            process(text) {
+                const normalizedText = text.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+                let bestIntent = null;
+                let maxScore = 0;
+
+                for (const intent of intents) {
+                    let matchCount = 0;
+                    for (const pattern of intent.patterns) {
+                        if (normalizedText.includes(pattern)) {
+                            matchCount += 1;
+                        }
+                    }
+                    // Priorizamos coincidencias más largas o exactas si es posible
+                    if (matchCount > 0 && matchCount >= maxScore) {
+                        maxScore = matchCount;
+                        bestIntent = intent;
+                    }
+                }
+
+                return bestIntent;
+            }
+        }
+
+        // ==========================================
+        // 3. CONTROLADOR DE INTERFAZ
+        // ==========================================
+        const brain = new AIBrain();
+        const chatContainer = document.getElementById('chat-container');
+        const userInput = document.getElementById('user-input');
+
+        function setInput(text) {
+            userInput.value = text;
+            userInput.focus();
+        }
+
+        function appendMessage(sender, text, type) {
+            const msgDiv = document.createElement('div');
+            msgDiv.classList.add('message', type);
+            
+            if (text.includes('<table') || text.includes('<br>') || text.includes('<code>')) {
+                msgDiv.innerHTML = `<strong>${sender}</strong><br>${text}`;
+            } else {
+                msgDiv.innerHTML = `<strong>${sender}</strong><br>${text}`;
+            }
+
+            const stamp = document.createElement('span');
+            stamp.classList.add('timestamp');
+            stamp.innerText = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            msgDiv.appendChild(stamp);
+
+            chatContainer.appendChild(msgDiv);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+
+        function generateTable(data, columns) {
+            let html = '<table><thead><tr>';
+            columns.forEach(col => html += `<th>${col.toUpperCase()}</th>`);
+            html += '</tr></thead><tbody>';
+            
+            data.forEach(row => {
+                html += '<tr>';
+                columns.forEach(col => html += `<td>${row[col]}</td>`);
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            return html;
+        }
+
+        function handleDataAction(action) {
+            if (action === "CALCULATE_AVERAGE") {
+                const sum = studentData.grades.reduce((acc, curr) => acc + curr.calificacion, 0);
+                const avg = (sum / studentData.grades.length).toFixed(2);
+                const table = generateTable(studentData.grades, ['materia', 'calificacion']);
+                
+                let msg = "";
+                if (avg > 90) msg = "¡Excelente desempeño! Mantén ese ritmo.";
+                else if (avg > 80) msg = "Buen trabajo, pero podemos mejorar en algunas áreas.";
+                else msg = "Atención: Necesitamos reforzar el estudio.";
+
+                return `Análisis Académico:<br>${table}<br><strong>PROMEDIO GENERAL: ${avg}</strong><br><em>${msg}</em>`;
+            } 
+            else if (action === "SHOW_SCHEDULE") {
+                const table = generateTable(studentData.schedule, ['dia', 'hora', 'materia']);
+                return `Agenda Semanal Cargada:<br>${table}`;
+            }
+            return "Error de acceso a datos.";
+        }
+
+        function handleSend() {
+            const text = userInput.value.trim();
+            if (!text) return;
+
+            appendMessage('INGENIERO', text, 'user');
+            userInput.value = '';
+
+            // Indicador visual de "Escribiendo..." podría ir aquí
+            
+            setTimeout(() => {
+                const intent = brain.process(text);
+                let response = "";
+
+                if (intent) {
+                    if (intent.action) {
+                        response = handleDataAction(intent.action);
+                    } else {
+                        const responses = intent.responses;
+                        response = responses[Math.floor(Math.random() * responses.length)];
+                    }
+                } else {
+                    response = "Comando desconocido. Intenta preguntar sobre: Redes, Bases de Datos, Programación, Cálculo, Seguridad o tu Horario.";
+                }
+
+                appendMessage('S.I.A.', response, 'bot');
+
+            }, 500);
+        }
+
+        userInput.addEventListener("keypress", function(event) {
+            if (event.key === "Enter") handleSend();
+        });
+
+        window.onload = () => {
+            setTimeout(() => appendMessage('SYSTEM', 'Cargando módulos: [Math, Net, Dev, Sec, DB]... OK.', 'bot'), 400);
+            setTimeout(() => appendMessage('S.I.A.', 'Sistema listo. ¿Qué repasamos hoy, ingeniero?', 'bot'), 1000);
+        };
+
+    </script>
+</body>
+</html>
